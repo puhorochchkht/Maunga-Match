@@ -1,0 +1,1073 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Match the Maunga</title>
+
+  <!-- Leaflet (map) -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+
+  <style>
+    :root{
+      --bg1:#0b1020;
+      --bg2:#1a0f2e;
+      --card: rgba(255,255,255,.08);
+      --card2: rgba(255,255,255,.12);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.72);
+      --accent1:#ff4fd8;
+      --accent2:#00e5ff;
+      --accent3:#7CFF6B;
+      --danger:#ff5a5f;
+      --shadow: 0 20px 50px rgba(0,0,0,.35);
+      --radius: 18px;
+      --radius2: 26px;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      min-height:100vh;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Helvetica Neue", "Noto Sans";
+      color:var(--text);
+      background:
+        radial-gradient(1200px 600px at 15% 15%, rgba(255,79,216,.35), transparent 55%),
+        radial-gradient(900px 600px at 85% 20%, rgba(0,229,255,.28), transparent 60%),
+        radial-gradient(900px 700px at 60% 85%, rgba(124,255,107,.20), transparent 60%),
+        linear-gradient(140deg, var(--bg1), var(--bg2));
+    }
+
+    header{
+      padding:24px 18px 8px;
+      max-width:1200px;
+      margin:0 auto;
+    }
+
+    .brand{
+      display:flex;
+      flex-wrap:wrap;
+      align-items:baseline;
+      gap:10px;
+    }
+    .brand h1{
+      margin:0;
+      font-size: clamp(22px, 4vw, 34px);
+      letter-spacing:.2px;
+      line-height:1.1;
+      background: linear-gradient(90deg, var(--accent1), var(--accent2), var(--accent3));
+      -webkit-background-clip:text;
+      background-clip:text;
+      color:transparent;
+    }
+    .brand .tag{
+      font-weight:800;
+      font-size:13px;
+      padding:6px 10px;
+      border-radius:999px;
+      background: linear-gradient(90deg, rgba(255,79,216,.25), rgba(0,229,255,.18));
+      border:1px solid rgba(255,255,255,.18);
+      color:var(--text);
+    }
+
+    .layout{
+      max-width:1200px;
+      margin:0 auto;
+      padding:14px 18px 28px;
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap:14px;
+    }
+    @media (max-width: 980px){
+      .layout{ grid-template-columns: 1fr; }
+    }
+
+    .panel{
+      background: var(--card);
+      border:1px solid rgba(255,255,255,.16);
+      border-radius: var(--radius2);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      position:relative;
+    }
+
+    .panel::before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background: linear-gradient(120deg, rgba(255,79,216,.30), rgba(0,229,255,.22), rgba(124,255,107,.18));
+      filter: blur(24px);
+      opacity:.35;
+      z-index:0;
+    }
+
+    .panel > .inner{
+      position:relative;
+      z-index:1;
+      padding:16px;
+    }
+
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+    @media (max-width: 560px){
+      .grid2{ grid-template-columns: 1fr; }
+    }
+
+    label{
+      display:block;
+      font-size:12px;
+      color:var(--muted);
+      margin-bottom:6px;
+    }
+    input, select, button{
+      width:100%;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(0,0,0,.22);
+      color:var(--text);
+      padding:12px 12px;
+      font-size:14px;
+      outline:none;
+    }
+    input:focus, select:focus{
+      border-color: rgba(0,229,255,.55);
+      box-shadow: 0 0 0 4px rgba(0,229,255,.12);
+    }
+
+    .btnRow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+    .btnRow button{
+      flex:1;
+      cursor:pointer;
+      font-weight:900;
+      letter-spacing:.2px;
+      transition: transform .06s ease, filter .15s ease, opacity .2s ease;
+    }
+    .btnRow button:active{ transform: scale(.99); }
+    button:disabled{ opacity:.45; cursor:not-allowed; }
+
+    .primary{
+      background: linear-gradient(90deg, rgba(255,79,216,.95), rgba(0,229,255,.85));
+      border: 1px solid rgba(255,255,255,.22);
+      color:#09101d;
+    }
+    .secondary{
+      background: rgba(255,255,255,.08);
+    }
+    .danger{
+      background: rgba(255,90,95,.18);
+      border-color: rgba(255,90,95,.35);
+    }
+
+    .status{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap:10px;
+      margin-top:12px;
+    }
+    @media (max-width: 560px){
+      .status{ grid-template-columns: 1fr; }
+    }
+
+    .stat{
+      background: var(--card2);
+      border:1px solid rgba(255,255,255,.14);
+      border-radius: var(--radius);
+      padding:12px;
+    }
+    .stat .k{
+      font-size:11px;
+      color:var(--muted);
+      margin-bottom:6px;
+    }
+    .stat .v{
+      font-size:18px;
+      font-weight:900;
+      letter-spacing:.2px;
+    }
+
+    .prompt{
+      margin-top:12px;
+      background: rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.14);
+      border-radius: var(--radius);
+      padding:12px;
+    }
+    .prompt .title{
+      font-weight:950;
+      font-size:14px;
+      margin:0 0 6px 0;
+    }
+    .prompt .desc{
+      margin:0;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.35;
+    }
+
+    .toast{
+      margin-top:10px;
+      padding:12px;
+      border-radius: var(--radius);
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.20);
+      color: var(--text);
+      font-size:13px;
+      line-height:1.35;
+    }
+
+    .pill{
+      display:inline-block;
+      padding:4px 8px;
+      border-radius:999px;
+      font-size:12px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.18);
+      color: var(--text);
+    }
+
+    .tiny{
+      font-size:12px;
+      color: var(--muted);
+      margin-top:10px;
+      line-height:1.35;
+    }
+
+    #map{
+      height: 560px;
+      width: 100%;
+      border-radius: var(--radius2);
+      border:1px solid rgba(255,255,255,.16);
+      overflow:hidden;
+      box-shadow: var(--shadow);
+    }
+    @media (max-width: 980px){
+      #map{ height: 520px; }
+    }
+
+    .leaderboard{
+      margin-top:14px;
+    }
+    table{
+      width:100%;
+      border-collapse:collapse;
+      overflow:hidden;
+      border-radius: var(--radius);
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+    }
+    th, td{
+      padding:10px 10px;
+      font-size:13px;
+      border-bottom: 1px solid rgba(255,255,255,.10);
+      text-align:left;
+    }
+    th{
+      font-size:12px;
+      color: var(--muted);
+      background: rgba(0,0,0,.18);
+    }
+    tr:last-child td{ border-bottom:none; }
+    .rank{
+      font-weight:900;
+      background: linear-gradient(90deg, rgba(255,79,216,.22), rgba(0,229,255,.14));
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="brand">
+    <h1>Match the Maunga</h1>
+    <span class="tag">Click the map • Lowest score wins</span>
+  </div>
+</header>
+
+<main class="layout">
+  <!-- LEFT: MAP -->
+  <section class="panel">
+    <div class="inner">
+      <div id="map"></div>
+      <p class="tiny">
+        Score adds up each round: <span class="pill">distance (km)</span> + <span class="pill">time (sec)</span>.
+        Practice mode lets you try again. Hard mode rewards accuracy.
+      </p>
+    </div>
+  </section>
+
+  <!-- RIGHT: CONTROLS + LEADERBOARD -->
+  <aside class="panel">
+    <div class="inner">
+      <div class="grid2">
+        <div>
+          <label for="name" id="nameLabel">Your name</label>
+          <input id="name" placeholder="e.g., Aria" autocomplete="off" />
+        </div>
+        <div>
+          <label for="school" id="schoolLabel">School</label>
+          <select id="school">
+            <option value="">Select…</option>
+            <option>Burnside High School</option>
+            <option>Avonside Girls’ High School</option>
+            <option>Riccarton High School</option>
+            <option>Christchurch Girls’ High School (CGHS)</option>
+            <option>Rolleston College</option>
+            <option>Cashmere High School</option>
+            <option>Kaiapoi High School</option>
+            <option>Shirley Boys’ High School</option>
+            <option>Rangiora High School</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid2" style="margin-top:10px;">
+        <div>
+          <label for="mode" id="modeLabel">Mode</label>
+          <select id="mode">
+            <option value="challenge" selected>Challenge (Leaderboard)</option>
+            <option value="practice">Practice (No leaderboard)</option>
+          </select>
+        </div>
+        <div>
+          <label for="difficulty" id="difficultyLabel">Difficulty</label>
+          <select id="difficulty">
+            <option value="easy">Easy (hint + gentle scoring)</option>
+            <option value="normal" selected>Normal</option>
+            <option value="hard">Hard (te reo + score boost)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid2" style="margin-top:10px;">
+        <div>
+          <label for="lang" id="langLabel">Language</label>
+          <select id="lang">
+            <option value="en" selected>English</option>
+            <option value="mi">Te Reo Māori</option>
+          </select>
+        </div>
+        <div>
+          <label for="lbFilter" id="lbFilterLabel">Leaderboard filter</label>
+          <select id="lbFilter">
+            <option value="all" selected>All schools</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="btnRow">
+        <button class="primary" id="startBtn">Start game</button>
+        <button class="secondary" id="howBtn">How it works</button>
+      </div>
+
+      <div class="status">
+        <div class="stat">
+          <div class="k" id="roundK">Round</div>
+          <div class="v" id="roundV">—</div>
+        </div>
+        <div class="stat">
+          <div class="k" id="scoreK">Total score</div>
+          <div class="v" id="scoreV">—</div>
+        </div>
+        <div class="stat">
+          <div class="k" id="timeK">Time</div>
+          <div class="v" id="timeV">—</div>
+        </div>
+      </div>
+
+      <div class="prompt">
+        <p class="title" id="promptTitle">Enter your name + school, then start.</p>
+        <p class="desc" id="promptDesc">
+          You will be given a maunga name. Click where you think it is on the map of Aotearoa. Lower score wins.
+        </p>
+      </div>
+
+      <div class="toast" id="toast" style="display:none;"></div>
+
+      <div class="btnRow" style="margin-top:12px;">
+        <button class="secondary" id="nextBtn" disabled>Next maunga</button>
+        <button class="danger" id="resetBtn">Teacher reset leaderboard</button>
+      </div>
+
+      <div class="leaderboard">
+        <h3 id="lbTitle" style="margin:14px 0 10px; font-size:16px;">Leaderboard (lowest wins)</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th id="lbName">Name</th>
+              <th id="lbSchool">School</th>
+              <th id="lbScore">Score</th>
+              <th id="lbDate">Date</th>
+            </tr>
+          </thead>
+          <tbody id="lbBody"></tbody>
+        </table>
+        <p class="tiny" id="lbNote">
+          Leaderboard saves on this device/browser. Practice mode does not save scores.
+        </p>
+      </div>
+    </div>
+  </aside>
+</main>
+
+<script>
+  // -----------------------------
+  // DATA
+  // -----------------------------
+  // Coordinates are approximate for classroom gameplay.
+  const MAUNGA = [
+    {
+      id: "aoraki",
+      en: "Aoraki / Mount Cook",
+      mi: "Aoraki",
+      hint: "Te Waipounamu — Southern Alps / Mackenzie area",
+      kōrero: "Aoraki is a significant tūpuna maunga and the highest peak in Aotearoa.",
+      img: "https://upload.wikimedia.org/wikipedia/commons/0/0b/Aoraki_Mount_Cook.jpg",
+      lat: -43.7349, lng: 170.1041
+    },
+    {
+      id: "tapuae",
+      en: "Tapuae-o-Uenuku",
+      mi: "Tapuae-o-Uenuku",
+      hint: "Te Waipounamu — Kaikōura Ranges",
+      kōrero: "Tapuae-o-Uenuku is the highest peak in the Kaikōura Ranges.",
+      img: "https://upload.wikimedia.org/wikipedia/commons/5/55/Kaikoura_Ranges.jpg",
+      lat: -41.9960, lng: 173.6628
+    },
+    {
+      id: "ruapehu",
+      en: "Mt Ruapehu",
+      mi: "Ruapehu",
+      hint: "Te Ika-a-Māui — Central Plateau",
+      kōrero: "Ruapehu is an active volcanic maunga in the central North Island.",
+      img: "https://upload.wikimedia.org/wikipedia/commons/6/6c/Mount_Ruapehu_from_the_air.jpg",
+      lat: -39.2787, lng: 175.5671
+    },
+    {
+      id: "taranaki",
+      en: "Mt Taranaki",
+      mi: "Taranaki",
+      hint: "Te Ika-a-Māui — West coast (Taranaki region)",
+      kōrero: "Taranaki is a prominent volcanic cone and a strong identity marker for its rohe.",
+      img: "https://upload.wikimedia.org/wikipedia/commons/2/2f/Mount_Taranaki.jpg",
+      lat: -39.2962, lng: 174.0638
+    },
+    {
+      id: "ahu_patiki",
+      en: "Te Ahu Pātiki (Mt Herbert)",
+      mi: "Te Ahu Pātiki",
+      hint: "Ōtautahi rohe — Banks Peninsula",
+      kōrero: "Te Ahu Pātiki is a key maunga on Te Pātaka o Rākaihautū (Banks Peninsula).",
+      img: "https://upload.wikimedia.org/wikipedia/commons/9/9f/Banks_Peninsula_New_Zealand.jpg",
+      lat: -43.6894, lng: 172.7416
+    },
+    {
+      id: "mauao",
+      en: "Mauao (Mt Maunganui)",
+      mi: "Mauao",
+      hint: "Te Ika-a-Māui — Tauranga Moana (Bay of Plenty)",
+      kōrero: "Mauao is a famous landmark at Tauranga Moana, recognised for cultural significance.",
+      img: "https://upload.wikimedia.org/wikipedia/commons/1/1a/Mount_Maunganui_from_the_air.jpg",
+      lat: -37.6434, lng: 176.1882
+    },
+    {
+      id: "maunganui",
+      en: "Maunganui",
+      mi: "Maunganui",
+      hint: "Same location as Mauao (Mt Maunganui) — name variation challenge",
+      kōrero: "Some places are known by more than one name. Location knowledge still matters.",
+      img: "https://upload.wikimedia.org/wikipedia/commons/1/1a/Mount_Maunganui_from_the_air.jpg",
+      lat: -37.6434, lng: 176.1882
+    }
+  ];
+
+  // -----------------------------
+  // STATE
+  // -----------------------------
+  let rounds = [];
+  let current = -1;
+  let gameOn = false;
+  let totalScore = 0;
+  let gameStartMs = 0;
+  let roundStartMs = 0;
+  let canClick = false;
+
+  let lastClickMarker = null;
+  let answerMarker = null;
+  let lastLine = null;
+
+  // -----------------------------
+  // LEADERBOARD (localStorage)
+  // -----------------------------
+  const LB_KEY = "match_maunga_leaderboard_v2";
+
+  function loadLB() {
+    try { return JSON.parse(localStorage.getItem(LB_KEY) || "[]"); }
+    catch { return []; }
+  }
+  function saveLB(entries) {
+    localStorage.setItem(LB_KEY, JSON.stringify(entries));
+  }
+
+  // -----------------------------
+  // UI REFS
+  // -----------------------------
+  const nameEl = document.getElementById("name");
+  const schoolEl = document.getElementById("school");
+  const modeEl = document.getElementById("mode");
+  const difficultyEl = document.getElementById("difficulty");
+  const langEl = document.getElementById("lang");
+  const lbFilterEl = document.getElementById("lbFilter");
+
+  const startBtn = document.getElementById("startBtn");
+  const howBtn = document.getElementById("howBtn");
+  const nextBtn = document.getElementById("nextBtn");
+  const resetBtn = document.getElementById("resetBtn");
+
+  const roundV = document.getElementById("roundV");
+  const scoreV = document.getElementById("scoreV");
+  const timeV  = document.getElementById("timeV");
+  const promptTitle = document.getElementById("promptTitle");
+  const promptDesc  = document.getElementById("promptDesc");
+  const toast = document.getElementById("toast");
+  const lbBody = document.getElementById("lbBody");
+
+  // Labels for translation
+  const labels = {
+    nameLabel: document.getElementById("nameLabel"),
+    schoolLabel: document.getElementById("schoolLabel"),
+    modeLabel: document.getElementById("modeLabel"),
+    difficultyLabel: document.getElementById("difficultyLabel"),
+    langLabel: document.getElementById("langLabel"),
+    lbFilterLabel: document.getElementById("lbFilterLabel"),
+    roundK: document.getElementById("roundK"),
+    scoreK: document.getElementById("scoreK"),
+    timeK: document.getElementById("timeK"),
+    lbTitle: document.getElementById("lbTitle"),
+    lbName: document.getElementById("lbName"),
+    lbSchool: document.getElementById("lbSchool"),
+    lbScore: document.getElementById("lbScore"),
+    lbDate: document.getElementById("lbDate"),
+    lbNote: document.getElementById("lbNote"),
+  };
+
+  // -----------------------------
+  // MAP
+  // -----------------------------
+  const map = L.map("map", {
+    zoomControl: true,
+    scrollWheelZoom: true
+  }).setView([-41.2, 172.8], 5);
+
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 18,
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+
+  // -----------------------------
+  // LANGUAGE / TEXT
+  // -----------------------------
+  function t(en, mi){
+    return (langEl.value === "mi") ? mi : en;
+  }
+
+  function roundName(target){
+    const diff = difficultyEl.value;
+    if (diff === "hard") return target.mi;
+    return (langEl.value === "mi") ? target.mi : target.en;
+  }
+
+  function applyLanguageUI(){
+    const mi = (langEl.value === "mi");
+
+    labels.nameLabel.textContent = mi ? "Tō ingoa" : "Your name";
+    labels.schoolLabel.textContent = mi ? "Kura" : "School";
+    labels.modeLabel.textContent = mi ? "Aratau" : "Mode";
+    labels.difficultyLabel.textContent = mi ? "Taumata uaua" : "Difficulty";
+    labels.langLabel.textContent = mi ? "Reo" : "Language";
+    labels.lbFilterLabel.textContent = mi ? "Tātari rārangi toa" : "Leaderboard filter";
+
+    startBtn.textContent = mi ? "Tīmata" : "Start game";
+    howBtn.textContent = mi ? "Me pēhea" : "How it works";
+    nextBtn.textContent = mi ? "Haere tonu" : "Next maunga";
+    resetBtn.textContent = mi ? "Muku rārangi toa (Kaiako)" : "Teacher reset leaderboard";
+
+    labels.roundK.textContent = mi ? "Wāhanga" : "Round";
+    labels.scoreK.textContent = mi ? "Kaute katoa" : "Total score";
+    labels.timeK.textContent = mi ? "Wā" : "Time";
+
+    labels.lbTitle.textContent = mi ? "Rārangi toa (ko te iti rawa te toa)" : "Leaderboard (lowest wins)";
+    labels.lbName.textContent = mi ? "Ingoa" : "Name";
+    labels.lbSchool.textContent = mi ? "Kura" : "School";
+    labels.lbScore.textContent = mi ? "Kaute" : "Score";
+    labels.lbDate.textContent = mi ? "Rā" : "Date";
+    labels.lbNote.textContent = mi
+      ? "Ka penapena te rārangi toa ki tēnei pūrere/tirotiro. Kāore te aratau whakaharatau e penapena."
+      : "Leaderboard saves on this device/browser. Practice mode does not save scores.";
+
+    // Mode + difficulty option labels (keep values intact)
+    modeEl.options[0].text = mi ? "Wero (Rārangi toa)" : "Challenge (Leaderboard)";
+    modeEl.options[1].text = mi ? "Whakaharatau (Kāore he rārangi toa)" : "Practice (No leaderboard)";
+    difficultyEl.options[0].text = mi ? "Ngāwari (tohu + kaute māmā)" : "Easy (hint + gentle scoring)";
+    difficultyEl.options[1].text = mi ? "Noa" : "Normal";
+    difficultyEl.options[2].text = mi ? "Uaua (reo Māori + kaute pai ake)" : "Hard (te reo + score boost)";
+
+    // If not in game, update landing prompt
+    if (!gameOn) {
+      promptTitle.textContent = mi ? "Tāuruhia tō ingoa me tō kura, kātahi ka tīmata." : "Enter your name + school, then start.";
+      promptDesc.textContent = mi
+        ? "Ka hoatu he ingoa maunga. Pāwhiria te mahere ki te wāhi e whakaaro ana koe kei reira. Ko te iti rawa te kaute ka toa."
+        : "You will be given a maunga name. Click where you think it is on the map of Aotearoa. Lower score wins.";
+    } else {
+      // Repaint current prompt title if mid-game
+      if (current >= 0 && current < rounds.length) {
+        const target = rounds[current];
+        promptTitle.textContent = `${t("Find:", "Kimihia:")} ${roundName(target)}`;
+      }
+    }
+
+    renderLB();
+  }
+
+  // -----------------------------
+  // GAME HELPERS
+  // -----------------------------
+  function shuffle(arr){
+    const a = [...arr];
+    for (let i=a.length-1; i>0; i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function haversineKm(lat1, lon1, lat2, lon2){
+    const R = 6371;
+    const toRad = (d) => d * Math.PI/180;
+    const dLat = toRad(lat2-lat1);
+    const dLon = toRad(lon2-lon1);
+    const a =
+      Math.sin(dLat/2)**2 +
+      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon/2)**2;
+    return 2 * R * Math.asin(Math.sqrt(a));
+  }
+
+  function roundTo1(n){
+    return Math.round(n * 10) / 10;
+  }
+
+  function showToast(html){
+    toast.style.display = "block";
+    toast.innerHTML = html;
+  }
+
+  function escapeHtml(str){
+    return String(str).replace(/[&<>"']/g, s => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+    }[s]));
+  }
+
+  function heatLabel(km){
+    if (km <= 20) return { label: "HOT",  emoji: "🔥", band: "hot"  };
+    if (km <= 80) return { label: "WARM", emoji: "🙂", band: "warm" };
+    if (km <= 200) return { label: "COOL", emoji: "🟦", band: "cool" };
+    return { label: "COLD", emoji: "🧊", band: "cold" };
+  }
+
+  function lineStyleForBand(band){
+    if (band === "hot")  return { weight: 4, opacity: 0.90, color: "#7CFF6B" };
+    if (band === "warm") return { weight: 4, opacity: 0.90, color: "#ffd166" };
+    if (band === "cool") return { weight: 4, opacity: 0.80, color: "#00e5ff" };
+    return { weight: 4, opacity: 0.90, color: "#ff5a5f" };
+  }
+
+  function difficultyMultiplier(diff){
+    // Lower is better, so hard rewards; easy slightly penalises
+    if (diff === "easy") return 1.10;
+    if (diff === "hard") return 0.90;
+    return 1.00;
+  }
+
+  function confettiBurst(){
+    const canvas = document.createElement("canvas");
+    canvas.style.position = "fixed";
+    canvas.style.inset = "0";
+    canvas.style.pointerEvents = "none";
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    document.body.appendChild(canvas);
+
+    const ctx = canvas.getContext("2d");
+    const pieces = Array.from({length: 140}).map(() => ({
+      x: Math.random() * canvas.width,
+      y: -20 - Math.random() * 200,
+      vx: (Math.random() - 0.5) * 6,
+      vy: 3 + Math.random() * 6,
+      r: 3 + Math.random() * 5,
+      rot: Math.random() * Math.PI,
+      hue: Math.floor(Math.random() * 360)
+    }));
+
+    let frames = 0;
+    function tick(){
+      frames++;
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      pieces.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.rot += 0.12;
+
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, 1 - frames/140);
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        ctx.fillStyle = `hsl(${p.hue} 90% 60%)`;
+        ctx.fillRect(-p.r, -p.r, p.r*2, p.r*2);
+        ctx.restore();
+      });
+
+      if (frames < 140) requestAnimationFrame(tick);
+      else canvas.remove();
+    }
+    tick();
+  }
+
+  // -----------------------------
+  // LEADERBOARD
+  // -----------------------------
+  function populateLbFilter(){
+    const options = Array.from(schoolEl.options).map(o => o.value).filter(v => v);
+    const currentVal = lbFilterEl.value || "all";
+    lbFilterEl.innerHTML = `<option value="all">${t("All schools","Ngā kura katoa")}</option>`;
+    options.forEach(s => {
+      const opt = document.createElement("option");
+      opt.value = s;
+      opt.textContent = s;
+      lbFilterEl.appendChild(opt);
+    });
+    lbFilterEl.value = options.includes(currentVal) ? currentVal : "all";
+  }
+
+  function renderLB(){
+    let lb = loadLB();
+    const filter = lbFilterEl.value || "all";
+    if (filter !== "all") lb = lb.filter(e => e.school === filter);
+
+    lbBody.innerHTML = "";
+    const top = lb.slice(0, 10);
+
+    if (top.length === 0){
+      lbBody.innerHTML = `<tr><td colspan="5" style="color:rgba(255,255,255,.7)">${t("No scores yet. Be the first.","Kāore he kaute ināianei. Me tīmata!")}</td></tr>`;
+      return;
+    }
+
+    top.forEach((e, i) => {
+      const tr = document.createElement("tr");
+      if (i === 0) tr.className = "rank";
+      tr.innerHTML = `
+        <td><b>${i+1}</b></td>
+        <td>${escapeHtml(e.name)}</td>
+        <td>${escapeHtml(e.school)}</td>
+        <td><b>${e.score}</b></td>
+        <td>${escapeHtml(e.date)}</td>
+      `;
+      lbBody.appendChild(tr);
+    });
+  }
+
+  // -----------------------------
+  // GAME FLOW
+  // -----------------------------
+  function buildRounds(){
+    // exactly 7 rounds (your list), shuffled each game
+    return shuffle(MAUNGA);
+  }
+
+  function resetMapMarks(){
+    if (lastClickMarker) { map.removeLayer(lastClickMarker); lastClickMarker = null; }
+    if (answerMarker) { map.removeLayer(answerMarker); answerMarker = null; }
+    if (lastLine) { map.removeLayer(lastLine); lastLine = null; }
+  }
+
+  function updateStatus(finished=false){
+    if (!gameOn && !finished){
+      roundV.textContent = "—";
+      scoreV.textContent = "—";
+      timeV.textContent  = "—";
+      return;
+    }
+
+    roundV.textContent = finished ? `${rounds.length}/${rounds.length}` : `${current+1}/${rounds.length}`;
+    scoreV.textContent = (modeEl.value === "practice") ? t("Practice","Whakaharatau") : totalScore.toString();
+
+    const sec = Math.max(1, Math.round((Date.now() - gameStartMs) / 1000));
+    timeV.textContent = `${sec}s`;
+  }
+
+  function startGame(){
+    const player = nameEl.value.trim();
+    const school = schoolEl.value.trim();
+
+    if (!player) return showToast(t("Please enter your name to start.","Tāuruhia tō ingoa kia tīmata ai."));
+    if (!school) return showToast(t("Please select your school to start.","Kōwhiria tō kura kia tīmata ai."));
+
+    rounds = buildRounds();
+    current = -1;
+    totalScore = 0;
+    gameOn = true;
+    gameStartMs = Date.now();
+    resetMapMarks();
+
+    toast.style.display = "none";
+    nextBtn.disabled = true;
+
+    nextRound();
+  }
+
+  function nextRound(){
+    current += 1;
+
+    if (current >= rounds.length) {
+      finishGame();
+      return;
+    }
+
+    canClick = true;
+    nextBtn.disabled = true;
+    roundStartMs = Date.now();
+
+    resetMapMarks();
+
+    const target = rounds[current];
+    const diff = difficultyEl.value;
+    const mode = modeEl.value;
+
+    map.setView([-41.2, 172.8], 5);
+
+    promptTitle.textContent = `${t("Find:", "Kimihia:")} ${roundName(target)}`;
+
+    if (diff === "easy") {
+      promptDesc.textContent = t(
+        `Hint: ${target.hint}. Click on the map.`,
+        `Tohu: ${target.hint}. Pāwhiria te mahere.`
+      );
+    } else {
+      promptDesc.textContent = t(
+        "Click on the map where you think this maunga is located.",
+        "Pāwhiria te mahere ki te wāhi e whakaaro ana koe kei reira tēnei maunga."
+      );
+    }
+
+    if (mode === "practice"){
+      promptDesc.textContent += t(" (You can try more than once.)"," (Ka taea te whakamātau neke atu i te kotahi.)");
+    }
+
+    toast.style.display = "none";
+    updateStatus();
+  }
+
+  function finishGame(){
+    canClick = false;
+    gameOn = false;
+    nextBtn.disabled = true;
+
+    const mode = modeEl.value;
+
+    // Practice mode: do not save
+    if (mode === "practice") {
+      promptTitle.textContent = t("Finished (Practice)!","Kua oti (Whakaharatau)!");
+      promptDesc.textContent = t(
+        "Practice mode does not save to the leaderboard.",
+        "Kāore te aratau whakaharatau e penapena ki te rārangi toa."
+      );
+      showToast(`<b>${t("Game complete","Kua oti te kēmu")}</b><br>${t("No leaderboard entry saved.","Kāore he kaute i penapenatia.")}`);
+      updateStatus(true);
+      return;
+    }
+
+    const player = nameEl.value.trim();
+    const school = schoolEl.value.trim();
+    const totalSec = Math.max(1, Math.round((Date.now() - gameStartMs) / 1000));
+
+    const entry = {
+      name: player,
+      school: school,
+      score: totalScore,
+      seconds: totalSec,
+      date: new Date().toISOString().slice(0, 10)
+    };
+
+    const lb = loadLB();
+    lb.push(entry);
+    lb.sort((a,b) => a.score - b.score);
+    saveLB(lb.slice(0, 50));
+
+    renderLB();
+
+    promptTitle.textContent = t("Finished!","Kua oti!");
+    promptDesc.textContent = t(
+      "Your score was added to the leaderboard. Lowest score wins.",
+      "Kua tāpirihia tō kaute ki te rārangi toa. Ko te iti rawa te kaute ka toa."
+    );
+
+    showToast(`<b>${t("Game complete","Kua oti te kēmu")}</b><br>${t("Total score","Kaute katoa")}: <span class="pill">${totalScore}</span><br>${t("Total time","Wā katoa")}: <span class="pill">${totalSec} sec</span>`);
+    updateStatus(true);
+  }
+
+  // Timer refresh
+  setInterval(() => { if (gameOn) updateStatus(); }, 500);
+
+  // -----------------------------
+  // MAP CLICK (core gameplay)
+  // -----------------------------
+  map.on("click", (e) => {
+    if (!gameOn || !canClick) return;
+
+    const target = rounds[current];
+    const clicked = { lat: e.latlng.lat, lng: e.latlng.lng };
+
+    // Mark click
+    if (lastClickMarker) map.removeLayer(lastClickMarker);
+    lastClickMarker = L.circleMarker([clicked.lat, clicked.lng], {
+      radius: 8, weight: 2, opacity: 1, fillOpacity: 0.35
+    }).addTo(map);
+
+    const sec = Math.max(1, Math.round((Date.now() - roundStartMs) / 1000));
+    const km = haversineKm(clicked.lat, clicked.lng, target.lat, target.lng);
+    const kmRounded = Math.round(km * 10) / 10;
+
+    const heat = heatLabel(kmRounded);
+    const diff = difficultyEl.value;
+    const mult = difficultyMultiplier(diff);
+    const mode = modeEl.value;
+
+    const rawRoundScore = kmRounded + sec;
+    const roundScore = roundTo1(rawRoundScore * mult);
+
+    // Correct marker + line
+    if (answerMarker) map.removeLayer(answerMarker);
+    answerMarker = L.circleMarker([target.lat, target.lng], {
+      radius: 8, weight: 2, opacity: 1, fillOpacity: 0.35
+    }).addTo(map);
+
+    if (lastLine) map.removeLayer(lastLine);
+    lastLine = L.polyline([[clicked.lat, clicked.lng], [target.lat, target.lng]], lineStyleForBand(heat.band)).addTo(map);
+
+    // Confetti for HOT
+    if (kmRounded <= 20) confettiBurst();
+
+    // Challenge vs Practice logic
+    if (mode === "challenge") {
+      totalScore = roundTo1(totalScore + roundScore);
+      canClick = false;
+      nextBtn.disabled = false;
+      promptDesc.textContent = t("Nice. Click “Next maunga” for the next round.","Ka pai. Pāwhiria “Haere tonu” mō te wāhanga e whai ake nei.");
+    } else {
+      // Practice: allow retries unless close enough (<= 80km)
+      if (kmRounded <= 80) {
+        canClick = false;
+        nextBtn.disabled = false;
+        promptDesc.textContent = t("Good enough — move on, or try again for HOT.","Kua pai — haere tonu, ā, ka taea te whakamātau anō kia “HOT”.");
+      } else {
+        promptDesc.textContent = t("Try again — zoom in and take another guess.","Whakamātau anō — whakatata (zoom) ka kimi anō.");
+      }
+    }
+
+    // Toast with image + kōrero
+    showToast(
+      `<b>${t("Round result","Hua o te wāhanga")}</b><br>
+       <span class="pill">${heat.emoji} ${heat.label}</span><br><br>
+       <b>${t("Maunga","Maunga")}:</b> <span class="pill">${escapeHtml(roundName(target))}</span><br>
+       <b>${t("Distance","Tawhiti")}:</b> <span class="pill">${kmRounded} km</span><br>
+       <b>${t("Time","Wā")}:</b> <span class="pill">${sec} sec</span><br>
+       ${mode === "challenge"
+          ? `<b>${t("Round score","Kaute wāhanga")}:</b> <span class="pill">${roundScore}</span><br>
+             <b>${t("Total score","Kaute katoa")}:</b> ${totalScore}<br>`
+          : `<b>${t("Practice mode","Aratau whakaharatau")}:</b> ${t("No leaderboard scoring.","Kāore he rārangi toa.")}<br>`
+       }
+       <div style="display:flex; gap:10px; margin-top:10px; align-items:flex-start;">
+          <img src="${escapeHtml(target.img)}" alt="Maunga image"
+            style="width:92px; height:64px; object-fit:cover; border-radius:12px; border:1px solid rgba(255,255,255,.16);"
+            onerror="this.style.display='none'">
+          <div style="color:rgba(255,255,255,.78); font-size:13px; line-height:1.35;">
+            ${escapeHtml(target.kōrero)}
+          </div>
+       </div>`
+    );
+
+    updateStatus();
+  });
+
+  // -----------------------------
+  // BUTTONS
+  // -----------------------------
+  startBtn.addEventListener("click", startGame);
+  nextBtn.addEventListener("click", nextRound);
+
+  howBtn.addEventListener("click", () => {
+    const mode = modeEl.value;
+    const diff = difficultyEl.value;
+    showToast(
+      `<b>${t("How it works","Me pēhea")}</b><br>
+       1) ${t("You get a maunga name.","Ka hoatu he ingoa maunga.")}<br>
+       2) ${t("Click where you think it is on the map.","Pāwhiria te wāhi e whakaaro ana koe kei reira.")}<br>
+       3) ${t("Feedback: HOT / WARM / COOL / COLD.","Urupare: HOT / WARM / COOL / COLD.")}<br>
+       4) ${t("Challenge score = distance (km) + time (sec).","Kaute wero = tawhiti (km) + wā (hekona).")}<br>
+       5) ${t("Practice mode lets you try again; no leaderboard.","Ka taea te whakamātau anō i te aratau whakaharatau; kāore he rārangi toa.")}<br><br>
+       <span class="pill">${t("Mode","Aratau")}: ${escapeHtml(mode)}</span>
+       <span class="pill">${t("Difficulty","Taumata uaua")}: ${escapeHtml(diff)}</span>`
+    );
+  });
+
+  resetBtn.addEventListener("click", () => {
+    const code = prompt(t("Teacher reset: enter code","Muku rārangi toa: tāuru waehere"));
+    if (code !== "PUHORO") return alert(t("Incorrect code.","He hē te waehere."));
+    localStorage.removeItem(LB_KEY);
+    renderLB();
+    alert(t("Leaderboard reset.","Kua mukua te rārangi toa."));
+  });
+
+  // -----------------------------
+  // FILTER / LANGUAGE EVENTS
+  // -----------------------------
+  lbFilterEl.addEventListener("change", renderLB);
+
+  langEl.addEventListener("change", () => {
+    populateLbFilter();
+    applyLanguageUI();
+  });
+
+  difficultyEl.addEventListener("change", () => {
+    // If mid-round, repaint prompt to reflect hard-mode te reo
+    if (gameOn && current >= 0 && current < rounds.length) {
+      const target = rounds[current];
+      promptTitle.textContent = `${t("Find:", "Kimihia:")} ${roundName(target)}`;
+    }
+  });
+
+  // -----------------------------
+  // INIT
+  // -----------------------------
+  populateLbFilter();
+  renderLB();
+  applyLanguageUI();
+</script>
+</body>
+</html>
